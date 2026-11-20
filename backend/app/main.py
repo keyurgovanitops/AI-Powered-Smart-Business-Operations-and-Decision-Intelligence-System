@@ -55,7 +55,9 @@ app.include_router(reports.router, prefix="/api")
 
 # Static files for PDF reports
 os.makedirs(settings.REPORTS_DIR, exist_ok=True)
-app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")), name="static")
+static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+if os.path.exists(static_dir):
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 @app.get("/")
 def root():

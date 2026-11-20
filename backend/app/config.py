@@ -8,13 +8,27 @@ backend_env = os.path.join(BASE_DIR, ".env")
 root_env = os.path.join(ROOT_DIR, ".env")
 env_path = backend_env if os.path.exists(backend_env) else root_env
 
+is_vercel = bool(os.environ.get("VERCEL"))
+if is_vercel:
+    tmp_db = "/tmp/banking_bi.db"
+    if not os.path.exists(tmp_db):
+        seed_db = os.path.join(ROOT_DIR, "banking_bi.db")
+        if os.path.exists(seed_db):
+            import shutil
+            shutil.copyfile(seed_db, tmp_db)
+    default_db = f"sqlite:///{tmp_db}"
+    default_reports = "/tmp/reports"
+else:
+    default_db = "sqlite:///./banking_bi.db"
+    default_reports = os.path.join(BASE_DIR, "static", "reports")
+
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Banking Decision Intelligence System"
-    VERSION: str = "1.0.0"
+    PROJECT_NAME: str = "EVA Banking Decision Intelligence System"
+    VERSION: str = "2.0.0"
     API_PREFIX: str = "/api"
     
     # Database - Default to SQLite, easily switched to PostgreSQL or MySQL via .env
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./banking_bi.db")
+    DATABASE_URL: str = os.getenv("DATABASE_URL", default_db)
     
     # JWT Authentication
     SECRET_KEY: str = os.getenv("SECRET_KEY", "super-secret-key-change-in-production-1234567890")
@@ -26,7 +40,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
     
     # Reports output
-    REPORTS_DIR: str = os.path.join(BASE_DIR, "static", "reports")
+    REPORTS_DIR: str = default_reports
 
     class Config:
         env_file = env_path
