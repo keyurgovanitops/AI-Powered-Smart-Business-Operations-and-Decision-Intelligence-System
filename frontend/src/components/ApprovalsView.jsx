@@ -164,23 +164,32 @@ export default function ApprovalsView({ user, onDecisionMade }) {
 
             {/* Officer Audit Notes */}
             {selectedItem.status === 'PENDING' ? (
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-800 block">
-                  Executive Officer Decision Notes (Mandatory for Audit Trail):
-                </label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Enter authorized justification: e.g., 'Approved in accordance with Q3 credit underwriting adjustments to reduce personal loan defaults below 5%.'"
-                  className="w-full text-xs p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 h-24 bg-white"
-                />
+              <div className="space-y-3">
+                <div className="flex items-center justify-between bg-blue-50/70 border border-blue-200 px-3 py-2 rounded-lg text-xs">
+                  <span className="text-blue-900 font-medium">Signing Officer:</span>
+                  <span className="font-bold text-blue-950">
+                    {user ? `${user.full_name} (${user.role})` : 'Chief Risk Officer'}
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-800 block">
+                    Officer Decision Justification (Mandatory for Regulatory Audit Trail):
+                  </label>
+                  <textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Enter authorized justification: e.g., 'Approved in accordance with Q3 credit underwriting adjustments to reduce personal loan defaults below 5%.'"
+                    className="w-full text-xs p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 h-24 bg-white"
+                  />
+                </div>
 
                 {/* Decision Buttons */}
-                <div className="flex items-center gap-3 pt-2">
+                <div className="flex items-center gap-3 pt-1">
                   <button
                     onClick={() => handleDecision('APPROVED')}
                     disabled={loading}
-                    className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-2.5 rounded-lg shadow-sm transition-all disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-2.5 rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer"
                   >
                     <CheckCircle className="w-4 h-4" />
                     <span>Approve Consequential Action</span>
@@ -188,7 +197,7 @@ export default function ApprovalsView({ user, onDecisionMade }) {
                   <button
                     onClick={() => handleDecision('REJECTED')}
                     disabled={loading}
-                    className="flex-1 flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs py-2.5 rounded-lg shadow-sm transition-all disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs py-2.5 rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer"
                   >
                     <XCircle className="w-4 h-4" />
                     <span>Reject Action</span>

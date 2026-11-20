@@ -63,6 +63,51 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user
 
+DEMO_OFFICERS = {
+    "cro@evabank.ai": {
+        "full_name": "Vikramaditya Singhania",
+        "role": "Chief Risk Officer",
+        "company_name": "EVA Commercial Bank",
+        "password": "admin123"
+    },
+    "manager@apexbank.com": {
+        "full_name": "Vikramaditya Singhania",
+        "role": "Chief Risk Officer",
+        "company_name": "EVA Commercial Bank",
+        "password": "admin123"
+    },
+    "credit.analyst@evabank.ai": {
+        "full_name": "Ananya Deshmukh",
+        "role": "Senior Credit Risk Analyst",
+        "company_name": "EVA Commercial Bank",
+        "password": "admin123"
+    },
+    "operations@evabank.ai": {
+        "full_name": "Rajesh Kulkarni",
+        "role": "Head of Banking Operations & AML",
+        "company_name": "EVA Commercial Bank",
+        "password": "admin123"
+    },
+    "cfo@evabank.ai": {
+        "full_name": "Meera Nambiar",
+        "role": "Chief Financial Officer",
+        "company_name": "EVA Commercial Bank",
+        "password": "admin123"
+    },
+    "auditor@evabank.ai": {
+        "full_name": "Devendra Sharma",
+        "role": "Lead Compliance & Model Auditor",
+        "company_name": "EVA Commercial Bank",
+        "password": "admin123"
+    },
+    "admin@evabank.ai": {
+        "full_name": "Arunabh Sen",
+        "role": "Platform System Administrator",
+        "company_name": "EVA Commercial Bank",
+        "password": "admin123"
+    }
+}
+
 @router.post("/register", response_model=UserResponse)
 def register(user_in: UserRegister, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.email == user_in.email).first()
@@ -84,6 +129,19 @@ def register(user_in: UserRegister, db: Session = Depends(get_db)):
 @router.post("/login", response_model=Token)
 def login(login_data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == login_data.email).first()
+    if not user and login_data.email in DEMO_OFFICERS:
+        spec = DEMO_OFFICERS[login_data.email]
+        user = User(
+            email=login_data.email,
+            hashed_password=get_password_hash(spec["password"]),
+            full_name=spec["full_name"],
+            role=spec["role"],
+            company_name=spec["company_name"]
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
     if not user or not verify_password(login_data.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect email or password")
     
@@ -106,18 +164,18 @@ def read_current_user(current_user: User = Depends(get_current_user)):
 
 @router.get("/users", response_model=List[UserResponse])
 def list_users(db: Session = Depends(get_db)):
-    users = db.query(User).all()
-    if not users:
-        # Create default manager if none exists
-        default_user = User(
-            email="manager@apexbank.com",
-            hashed_password=get_password_hash("admin123"),
-            full_name="Vikramaditya Singhania",
-            role="Chief Risk Officer",
-            company_name="Apex Commercial Bank"
-        )
-        db.add(default_user)
-        db.commit()
-        db.refresh(default_user)
-        users = [default_user]
-    return users
+    for email, spec in DEMO_OFFICERS.items():
+        if email == "manager@apexbank.com":
+            continue
+        exists = db.query(User).filter(User.email == email).first()
+        if not exists:
+            u = User(
+                email=email,
+                hashed_password=get_password_hash(spec["password"]),
+                full_name=spec["full_name"],
+                role=spec["role"],
+                company_name=spec["company_name"]
+            )
+            db.add(u)
+    db.commit()
+    return db.query(User).all()
