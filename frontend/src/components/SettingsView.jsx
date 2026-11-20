@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Building, Target, Users, Shield, Cpu, Key, Database, CheckCircle2 } from 'lucide-react';
 
 export default function SettingsView({ user }) {
-  const [companyName, setCompanyName] = useState('Apex Commercial Bank');
+  const [companyName, setCompanyName] = useState('EVA Commercial Bank');
   const [industry, setIndustry] = useState('Banking (Financial & Risk Intelligence)');
   const [teamSize, setTeamSize] = useState('150-500 employees');
   const [strategicGoals, setStrategicGoals] = useState('Compress personal loan delinquency from 21.12% to below 5.0%, expand corporate treasury deposit share by 15%, and deploy real-time automated AML fraud monitoring across high-velocity UPI payment channels.');

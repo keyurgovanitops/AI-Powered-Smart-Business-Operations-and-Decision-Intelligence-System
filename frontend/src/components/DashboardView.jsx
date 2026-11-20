@@ -50,7 +50,7 @@ export default function DashboardView({ kpis }) {
             </span>
           </div>
           <h2 className="text-lg font-bold">
-            Apex Commercial Bank — Portfolio Operations & Surveillance
+            EVA — Portfolio Operations & Surveillance Engine
           </h2>
           <p className="text-xs text-slate-300 max-w-2xl mt-0.5">
             Audit coverage encompasses May 1, 2026 to October 31, 2026. Data ingested from verified core banking records comprising 1,200 clients and 1,600 accounts.

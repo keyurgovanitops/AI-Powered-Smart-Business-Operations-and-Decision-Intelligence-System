@@ -28,8 +28,8 @@ export default function App() {
     id: 1,
     full_name: 'Vikramaditya Singhania',
     role: 'Chief Risk Officer',
-    email: 'manager@apexbank.com',
-    company_name: 'Apex Commercial Bank'
+    email: 'cro@evabank.ai',
+    company_name: 'EVA Commercial Bank'
   });
 
   const showToast = (message, type = 'success') => {

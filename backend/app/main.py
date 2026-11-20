@@ -14,9 +14,9 @@ from backend.app.routers import auth, dataset, analytics, agents, approval, repo
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
-    title="Apex Bank Decision Intelligence Platform",
-    description="Multi-Agent AI Operations & Decision Intelligence System (CrewAI + FastAPI + React)",
-    version="1.0.0",
+    title="EVA — Autonomous Banking Intelligence Platform",
+    description="EVA Enterprise Multi-Agent AI Operations & Decision Intelligence System (CrewAI + FastAPI + React)",
+    version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -60,8 +60,10 @@ app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(os.path.
 @app.get("/")
 def root():
     return {
-        "message": "Apex Bank Multi-Agent Decision Intelligence API is running",
+        "platform": "EVA",
+        "tagline": "Enterprise Vision & Autonomous Banking Operations",
+        "message": "EVA Multi-Agent Decision Intelligence API is live and operational",
         "docs": "/docs",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "dataset_period": "May 1, 2026 - October 31, 2026"
     }

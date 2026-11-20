@@ -7,7 +7,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [companyName, setCompanyName] = useState('Apex Commercial Bank');
+  const [companyName, setCompanyName] = useState('EVA Commercial Bank');
   const [role, setRole] = useState('Chief Risk Officer');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');

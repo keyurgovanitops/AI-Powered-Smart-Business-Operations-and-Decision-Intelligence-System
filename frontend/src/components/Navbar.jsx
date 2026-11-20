@@ -24,10 +24,10 @@ export default function Navbar({
       {/* Title & Context */}
       <div>
         <h2 className="text-base font-bold text-slate-900 leading-tight">
-          {titles[activeTab] || 'Apex Commercial Bank'}
+          {titles[activeTab] || 'EVA Autonomous Banking Platform'}
         </h2>
         <div className="flex items-center gap-2 text-xs text-slate-500">
-          <span>Apex Commercial Bank</span>
+          <span className="font-bold text-blue-700">EVA Financial</span>
           <span>•</span>
           <span className="font-medium text-slate-600">Enterprise BI Architecture</span>
           <span>•</span>

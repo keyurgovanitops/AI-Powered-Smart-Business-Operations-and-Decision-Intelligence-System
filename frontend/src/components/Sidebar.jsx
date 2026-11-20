@@ -1,4 +1,5 @@
 import React from 'react';
+import EvaLogo from './EvaLogo';
 import { 
   Building2, 
   LayoutDashboard, 
@@ -37,15 +38,22 @@ export default function Sidebar({
   return (
     <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 border-r border-slate-800 select-none">
       {/* Brand & Organization */}
-      <div className="h-16 flex items-center px-6 border-b border-slate-800 gap-3">
-        <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-500/20">
-          <Building2 className="w-5 h-5" />
+      <div className="h-16 flex items-center px-5 border-b border-slate-800 gap-3">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20 bg-slate-800/80 p-0.5 border border-slate-700">
+          <EvaLogo className="w-7 h-7" />
         </div>
         <div>
-          <h1 className="text-sm font-bold text-white tracking-tight leading-none">
-            Apex Commercial Bank
-          </h1>
-          <span className="text-[11px] text-slate-400 font-medium">Decision Intelligence Platform</span>
+          <div className="flex items-center gap-1.5">
+            <h1 className="text-base font-extrabold text-white tracking-wider leading-none">
+              EVA
+            </h1>
+            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/70 border border-emerald-500/30 px-1.5 py-0.2 rounded">
+              AI
+            </span>
+          </div>
+          <span className="text-[10px] text-slate-400 font-medium block truncate max-w-[140px] mt-0.5">
+            Autonomous Banking Intelligence
+          </span>
         </div>
       </div>
 

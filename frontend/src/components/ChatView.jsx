@@ -6,7 +6,7 @@ export default function ChatView() {
   const [messages, setMessages] = useState([
     {
       sender: 'ai',
-      text: 'Good day. I am the Apex Bank Decision Intelligence Assistant. You can query any core portfolio metric, credit default trends, liquidity reserves, or AML surveillance flags directly from the verified database.',
+      text: 'Good day. I am EVA, your executive banking intelligence assistant. You can query any core portfolio metric, credit default trends, liquidity reserves, or AML surveillance flags directly from the verified database.',
       time: 'Ready',
       sources: ['Core Banking Database (May-Oct 2026)']
     }

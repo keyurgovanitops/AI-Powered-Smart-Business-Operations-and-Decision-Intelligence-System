@@ -181,7 +181,7 @@ export default function AdminView({ user }) {
                         {u.role || 'Officer'}
                       </span>
                     </td>
-                    <td className="px-5 py-3 text-slate-600">{u.company_name || 'Apex Commercial Bank'}</td>
+                    <td className="px-5 py-3 text-slate-600">{u.company_name || 'EVA Commercial Bank'}</td>
                     <td className="px-5 py-3">
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
                         Active
