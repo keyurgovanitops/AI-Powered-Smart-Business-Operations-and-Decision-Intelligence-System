@@ -1,7 +1,9 @@
+import os
 import datetime
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from backend.app.database import get_db
+from backend.app.config import settings
 from backend.app.services.kpi_engine import calculate_banking_kpis
 from backend.app.agents.banking_crew import run_banking_multi_agent_analysis
 from backend.app.services.pdf_generator import generate_pdf_report
@@ -22,7 +24,7 @@ def execute_multi_agent_analysis(db: Session = Depends(get_db)):
 
     # 2. Create Analysis Report record in progress
     report = AnalysisReport(
-        title="Apex Bank Operations & Risk Decision Intelligence Report",
+        title="EVA Operations & Risk Decision Intelligence Report",
         status="PROCESSING",
         kpi_snapshot=kpis,
         dataset_period="May 1, 2026 - October 31, 2026"
@@ -65,8 +67,13 @@ def execute_multi_agent_analysis(db: Session = Depends(get_db)):
     report.is_verified = agent_results.get("is_verified", "VERIFIED")
 
     # 5. Generate PDF report
-    pdf_file = generate_pdf_report(agent_results, kpis, f"ApexBank_Audit_Report_{report.id}.pdf")
-    report.pdf_filename = pdf_file
+    try:
+        os.makedirs(settings.REPORTS_DIR, exist_ok=True)
+        pdf_file = generate_pdf_report(agent_results, kpis, f"EVA_Audit_Report_{report.id}.pdf")
+        report.pdf_filename = pdf_file
+    except Exception as e:
+        print(f"PDF generation deferred to download time: {e}")
+        report.pdf_filename = f"EVA_Audit_Report_{report.id}.pdf"
 
     # 6. Create Human-in-the-Loop decision requirement
     action_info = agent_results.get("proposed_action", {})

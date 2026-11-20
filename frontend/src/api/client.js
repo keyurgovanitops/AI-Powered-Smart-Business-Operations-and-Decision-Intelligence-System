@@ -27,4 +27,29 @@ export const fetchLatestReport = () => api.get('/reports/latest');
 export const getDatasetStatus = () => api.get('/dataset/status');
 export const seedDataset = () => api.post('/dataset/seed');
 
+export const downloadPdfFile = async (reportId) => {
+  if (!reportId) return;
+  try {
+    const res = await fetch(`/api/reports/${reportId}/pdf`);
+    if (!res.ok) throw new Error('Download failed');
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `EVA_Audit_Report_${reportId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => window.URL.revokeObjectURL(url), 2000);
+  } catch (e) {
+    // Fallback: direct anchor trigger
+    const a = document.createElement('a');
+    a.href = `/api/reports/${reportId}/pdf`;
+    a.download = `EVA_Audit_Report_${reportId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+};
+
 export default api;

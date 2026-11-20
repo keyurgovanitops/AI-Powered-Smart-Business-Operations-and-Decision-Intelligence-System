@@ -19,7 +19,7 @@ import {
   Check,
   Download
 } from 'lucide-react';
-import { runAgentCrew } from '../api/client';
+import { runAgentCrew, downloadPdfFile } from '../api/client';
 import confetti from 'canvas-confetti';
 
 export default function AgentCrewView({ 
@@ -158,7 +158,7 @@ export default function AgentCrewView({
 
   const downloadPdf = (reportId) => {
     if (!reportId) return;
-    window.open(`/api/reports/${reportId}/pdf`, '_blank');
+    downloadPdfFile(reportId);
   };
 
   return (

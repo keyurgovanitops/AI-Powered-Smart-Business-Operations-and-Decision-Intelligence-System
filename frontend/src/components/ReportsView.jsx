@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Download, ShieldCheck, Calendar, Clock, ExternalLink, CheckCircle } from 'lucide-react';
 import axios from 'axios';
+import { downloadPdfFile } from '../api/client';
 
 export default function ReportsView() {
   const [reports, setReports] = useState([]);
@@ -27,7 +28,8 @@ export default function ReportsView() {
   }, []);
 
   const handleDownload = (reportId) => {
-    window.open(`/api/reports/${reportId}/pdf`, '_blank');
+    if (!reportId) return;
+    downloadPdfFile(reportId);
   };
 
   return (

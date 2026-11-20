@@ -11,7 +11,9 @@ def generate_pdf_report(report_data: dict, kpis: dict, output_filename: str = No
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         output_filename = f"Banking_BI_Report_{timestamp}.pdf"
     
+    os.makedirs(settings.REPORTS_DIR, exist_ok=True)
     file_path = os.path.join(settings.REPORTS_DIR, output_filename)
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
     
     doc = SimpleDocTemplate(
         file_path,

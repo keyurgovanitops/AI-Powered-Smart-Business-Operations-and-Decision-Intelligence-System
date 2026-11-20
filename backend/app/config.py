@@ -8,16 +8,45 @@ backend_env = os.path.join(BASE_DIR, ".env")
 root_env = os.path.join(ROOT_DIR, ".env")
 env_path = backend_env if os.path.exists(backend_env) else root_env
 
-is_vercel = bool(os.environ.get("VERCEL"))
-if is_vercel:
-    tmp_db = "/tmp/banking_bi.db"
+import tempfile
+import shutil
+
+is_serverless = bool(
+    os.environ.get("VERCEL") or 
+    os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or 
+    not os.access(os.getcwd(), os.W_OK)
+)
+
+if is_serverless:
+    tmp_dir = tempfile.gettempdir()
+    tmp_db = os.path.join(tmp_dir, "banking_bi.db")
     if not os.path.exists(tmp_db):
-        seed_db = os.path.join(ROOT_DIR, "banking_bi.db")
-        if os.path.exists(seed_db):
-            import shutil
-            shutil.copyfile(seed_db, tmp_db)
+        candidates = [
+            os.path.join(ROOT_DIR, "banking_bi.db"),
+            os.path.join(os.getcwd(), "banking_bi.db"),
+            os.path.join(BASE_DIR, "banking_bi.db"),
+            os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "banking_bi.db"),
+        ]
+        copied = False
+        for cand in candidates:
+            if os.path.exists(cand):
+                try:
+                    shutil.copyfile(cand, tmp_db)
+                    copied = True
+                    break
+                except Exception:
+                    pass
+        if not copied:
+            for root, dirs, files in os.walk(os.getcwd()):
+                if "banking_bi.db" in files:
+                    try:
+                        shutil.copyfile(os.path.join(root, "banking_bi.db"), tmp_db)
+                        break
+                    except Exception:
+                        pass
     default_db = f"sqlite:///{tmp_db}"
-    default_reports = "/tmp/reports"
+    default_reports = os.path.join(tmp_dir, "reports")
+    os.makedirs(default_reports, exist_ok=True)
 else:
     default_db = "sqlite:///./banking_bi.db"
     default_reports = os.path.join(BASE_DIR, "static", "reports")
@@ -47,4 +76,8 @@ class Settings(BaseSettings):
         extra = "ignore"
 
 settings = Settings()
+if is_serverless:
+    settings.DATABASE_URL = default_db
+    settings.REPORTS_DIR = default_reports
+
 os.makedirs(settings.REPORTS_DIR, exist_ok=True)
