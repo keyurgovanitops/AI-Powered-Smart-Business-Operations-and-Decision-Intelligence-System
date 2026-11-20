@@ -76,18 +76,19 @@ export default function App() {
   }, []);
 
   const handleRunCrew = async () => {
+    if (runningCrew) return;
     setRunningCrew(true);
+    setActiveTab('agents');
     try {
       const res = await runAgentCrew();
       setLatestReport(res.data);
       await loadData();
-      setActiveTab('agents');
       try {
         confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
       } catch (e) {}
       showToast(`Multi-Agent Crew Analysis completed! Generated Audit Dossier #${res.data.id}.`, 'success');
     } catch (err) {
-      showToast(err.response?.data?.detail || 'Multi-Agent crew execution failed.', 'error');
+      showToast(err.response?.data?.detail || 'Multi-Agent crew execution timed out or failed.', 'error');
     } finally {
       setRunningCrew(false);
     }
@@ -153,6 +154,8 @@ export default function App() {
               {activeTab === 'agents' && (
                 <AgentCrewView 
                   latestReport={latestReport} 
+                  runningCrew={runningCrew}
+                  onRunCrew={handleRunCrew}
                   onReportGenerated={(newRep) => {
                     setLatestReport(newRep);
                     loadData();

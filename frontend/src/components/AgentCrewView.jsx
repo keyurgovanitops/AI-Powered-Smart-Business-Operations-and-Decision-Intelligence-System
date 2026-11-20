@@ -16,17 +16,25 @@ import {
   Clock,
   ArrowRight,
   Database,
-  Check
+  Check,
+  Download
 } from 'lucide-react';
 import { runAgentCrew } from '../api/client';
 import confetti from 'canvas-confetti';
 
-export default function AgentCrewView({ latestReport, onReportGenerated }) {
-  const [loading, setLoading] = useState(false);
+export default function AgentCrewView({ 
+  latestReport, 
+  onReportGenerated,
+  runningCrew = false,
+  onRunCrew
+}) {
+  const [localLoading, setLocalLoading] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [expandedAgent, setExpandedAgent] = useState('strategy');
   const [errorMsg, setErrorMsg] = useState('');
   const [successBanner, setSuccessBanner] = useState(null);
+
+  const isExecuting = runningCrew || localLoading;
 
   const workflowSteps = [
     { num: 1, title: 'Data Analyst Agent', desc: 'Ingesting 1,200 customers, 1,600 accounts & 3,500 transactions' },
@@ -36,6 +44,32 @@ export default function AgentCrewView({ latestReport, onReportGenerated }) {
     { num: 5, title: 'Strategy Agent', desc: 'Synthesizing board turnaround plan & underwriting cutoff revision' },
     { num: 6, title: 'Verification Agent', desc: 'Mathematical reconciliation against SQL ledgers (Zero Hallucination)' }
   ];
+
+  // Animate step progression whenever execution starts
+  useEffect(() => {
+    let interval;
+    if (isExecuting) {
+      setActiveStep(1);
+      interval = setInterval(() => {
+        setActiveStep((prev) => (prev < 6 ? prev + 1 : prev));
+      }, 700);
+    } else {
+      setActiveStep(0);
+    }
+    return () => clearInterval(interval);
+  }, [isExecuting]);
+
+  // When latestReport updates, show the success banner
+  useEffect(() => {
+    if (latestReport) {
+      setSuccessBanner({
+        id: latestReport.id,
+        title: latestReport.title,
+        time: new Date(latestReport.generated_at).toLocaleTimeString(),
+        verified: latestReport.is_verified || 'VERIFIED'
+      });
+    }
+  }, [latestReport?.id]);
 
   const agents = [
     {
@@ -100,48 +134,31 @@ export default function AgentCrewView({ latestReport, onReportGenerated }) {
     },
   ];
 
-  const handleRunCrew = async () => {
-    setLoading(true);
+  const handleExecute = async () => {
+    if (onRunCrew) {
+      await onRunCrew();
+      return;
+    }
+    setLocalLoading(true);
     setErrorMsg('');
-    setSuccessBanner(null);
-    setActiveStep(1);
-
-    // Simulate animated step progression while backend processes
-    const stepInterval = setInterval(() => {
-      setActiveStep((prev) => (prev < 6 ? prev + 1 : prev));
-    }, 900);
-
     try {
       const res = await runAgentCrew();
-      clearInterval(stepInterval);
-      setActiveStep(6);
-
       try {
-        confetti({
-          particleCount: 80,
-          spread: 60,
-          origin: { y: 0.6 }
-        });
-      } catch (e) {
-        // confetti fallback
-      }
-
-      setSuccessBanner({
-        id: res.data.id,
-        title: res.data.title,
-        time: new Date().toLocaleTimeString(),
-        verified: res.data.is_verified || 'VERIFIED'
-      });
-
+        confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+      } catch (e) {}
       if (onReportGenerated) {
         onReportGenerated(res.data);
       }
     } catch (err) {
-      clearInterval(stepInterval);
       setErrorMsg(err.response?.data?.detail || 'Agent execution failed. Please verify database connectivity.');
     } finally {
-      setLoading(false);
+      setLocalLoading(false);
     }
+  };
+
+  const downloadPdf = (reportId) => {
+    if (!reportId) return;
+    window.open(`/api/reports/${reportId}/pdf`, '_blank');
   };
 
   return (
@@ -172,14 +189,14 @@ export default function AgentCrewView({ latestReport, onReportGenerated }) {
         </div>
 
         <button
-          onClick={handleRunCrew}
-          disabled={loading}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs px-6 py-3.5 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-50 whitespace-nowrap self-stretch md:self-auto justify-center cursor-pointer"
+          onClick={handleExecute}
+          disabled={isExecuting}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-xs px-6 py-3.5 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-60 whitespace-nowrap self-stretch md:self-auto justify-center cursor-pointer"
         >
-          {loading ? (
+          {isExecuting ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin text-white" />
-              <span>Orchestrating 6 Agents ({activeStep}/6)...</span>
+              <span>Orchestrating 6 Agents ({activeStep || 1}/6)...</span>
             </>
           ) : (
             <>
@@ -190,9 +207,9 @@ export default function AgentCrewView({ latestReport, onReportGenerated }) {
         </button>
       </div>
 
-      {/* Success Notification Banner */}
+      {/* Success Notification Banner with DIRECT PDF DOWNLOAD */}
       {successBanner && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 shadow-sm flex items-start justify-between gap-3 animate-fade-in">
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in">
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5 font-bold">
               ✓
@@ -210,16 +227,26 @@ export default function AgentCrewView({ latestReport, onReportGenerated }) {
                 </span>
               </div>
               <p className="text-xs text-emerald-800 mt-1">
-                Audit Dossier #{successBanner.id} generated, signed by Verification Agent ({successBanner.verified}), and permanently logged to database ledgers. Official PDF is ready for export.
+                Audit Dossier #{successBanner.id} generated, signed by Verification Agent ({successBanner.verified}), and permanently logged to database ledgers.
               </p>
             </div>
           </div>
-          <button
-            onClick={() => setSuccessBanner(null)}
-            className="text-emerald-700 hover:text-emerald-950 text-xs font-bold p-1 cursor-pointer"
-          >
-            ✕
-          </button>
+
+          <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end shrink-0">
+            <button
+              onClick={() => downloadPdf(successBanner.id)}
+              className="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-bold text-xs px-4 py-2.5 rounded-lg shadow-sm transition-all cursor-pointer"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download Official PDF Report</span>
+            </button>
+            <button
+              onClick={() => setSuccessBanner(null)}
+              className="text-emerald-700 hover:text-emerald-950 text-xs font-bold p-1 cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
 
@@ -231,15 +258,15 @@ export default function AgentCrewView({ latestReport, onReportGenerated }) {
       )}
 
       {/* Active Execution Live Stepper */}
-      {loading && (
+      {isExecuting && (
         <div className="card-base p-5 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 border border-blue-200 space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-blue-900 flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-              Live Multi-Agent Orchestration in Progress (Step {activeStep} of 6)
+              Live Multi-Agent Orchestration in Progress (Step {activeStep || 1} of 6)
             </span>
             <span className="text-xs font-mono font-bold text-blue-700">
-              {Math.round((activeStep / 6) * 100)}% Complete
+              {Math.round(((activeStep || 1) / 6) * 100)}% Complete
             </span>
           </div>
 
@@ -247,14 +274,14 @@ export default function AgentCrewView({ latestReport, onReportGenerated }) {
           <div className="w-full bg-blue-100 rounded-full h-2 overflow-hidden">
             <div 
               className="bg-blue-600 h-2 rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${(activeStep / 6) * 100}%` }}
+              style={{ width: `${((activeStep || 1) / 6) * 100}%` }}
             ></div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-6 gap-2 pt-2">
             {workflowSteps.map((s) => {
               const isPast = activeStep > s.num;
-              const isCurrent = activeStep === s.num;
+              const isCurrent = (activeStep || 1) === s.num;
               return (
                 <div 
                   key={s.num} 
@@ -314,7 +341,7 @@ export default function AgentCrewView({ latestReport, onReportGenerated }) {
         </div>
       </div>
 
-      {/* Active Dossier Information Bar */}
+      {/* Active Dossier Information Bar with DIRECT DOWNLOAD BUTTON */}
       {latestReport && (
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-slate-100 rounded-lg border border-slate-200 text-xs">
           <div className="flex items-center gap-3">
@@ -330,10 +357,19 @@ export default function AgentCrewView({ latestReport, onReportGenerated }) {
               Status: <span className="font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded text-[10px]">{latestReport.status}</span>
             </span>
           </div>
-          <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            Mathematical Integrity: {latestReport.is_verified || 'VERIFIED'}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              Mathematical Integrity: {latestReport.is_verified || 'VERIFIED'}
+            </span>
+            <button
+              onClick={() => downloadPdf(latestReport.id)}
+              className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-3 py-1 rounded-md shadow-xs transition-colors cursor-pointer"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Download PDF</span>
+            </button>
+          </div>
         </div>
       )}
 

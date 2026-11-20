@@ -16,9 +16,9 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-export const fetchKPIs = () => api.get('/analytics/kpis');
-export const sendChatMessage = (question) => api.post('/analytics/chat', { question });
-export const runAgentCrew = () => api.post('/agents/run');
+export const fetchKPIs = () => api.get('/analytics/kpis', { timeout: 8000 });
+export const sendChatMessage = (question) => api.post('/analytics/chat', { question }, { timeout: 10000 });
+export const runAgentCrew = () => api.post('/agents/run', {}, { timeout: 12000 });
 export const fetchPendingApprovals = () => api.get('/approvals/pending');
 export const submitApproval = (id, decision, decision_by, decision_notes) => 
   api.post(`/approvals/${id}/decide`, { decision, decision_by, decision_notes });

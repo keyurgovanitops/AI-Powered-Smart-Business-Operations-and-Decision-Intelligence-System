@@ -56,7 +56,8 @@ Ensure the tone is strictly professional, analytical, and authoritative. Return 
                 "generationConfig": {"responseMimeType": "application/json"}
             }
             
-            res = requests.post(url, json=payload, timeout=30)
+            # Fast 6-second timeout so user never experiences long loading
+            res = requests.post(url, json=payload, timeout=6)
             if res.status_code == 200:
                 data = json.loads(res.json()["candidates"][0]["content"]["parts"][0]["text"])
                 return {
