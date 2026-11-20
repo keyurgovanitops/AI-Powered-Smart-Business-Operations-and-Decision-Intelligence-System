@@ -21,6 +21,35 @@ def get_dataset_status(db: Session = Depends(get_db)):
         "default_file_exists": os.path.exists(DEFAULT_DATASET_PATH)
     }
 
+@router.get("/preview/{table_name}")
+def get_table_preview(table_name: str, limit: int = 15, db: Session = Depends(get_db)):
+    table_map = {
+        "customers": (Customer, ["customer_id", "customer_name", "age", "city", "customer_segment", "kyc_status", "risk_profile"]),
+        "accounts": (Account, ["account_id", "customer_id", "account_type", "branch_id", "current_balance", "account_status"]),
+        "transactions": (Transaction, ["transaction_id", "account_id", "transaction_date", "transaction_type", "amount", "channel", "is_flagged"]),
+        "loans": (LoanApplication, ["loan_id", "customer_id", "application_date", "loan_type", "requested_amount", "annual_interest_rate", "credit_score", "application_status"]),
+        "repayments": (LoanRepayment, ["repayment_id", "loan_id", "due_date", "due_amount", "paid_amount", "repayment_status", "days_past_due"]),
+        "risk_events": (RiskEvent, ["event_id", "customer_id", "event_date", "event_type", "risk_level", "case_status", "assigned_team"])
+    }
+    
+    table_info = table_map.get(table_name.lower())
+    if not table_info:
+        raise HTTPException(status_code=400, detail=f"Table {table_name} not found. Available: {list(table_map.keys())}")
+        
+    model, cols = table_info
+    records = db.query(model).limit(limit).all()
+    rows = []
+    for r in records:
+        row = {c: getattr(r, c, None) for c in cols}
+        rows.append(row)
+        
+    return {
+        "table": table_name,
+        "columns": cols,
+        "total_in_db": db.query(model).count(),
+        "rows": rows
+    }
+
 @router.post("/seed")
 def seed_default_dataset(db: Session = Depends(get_db)):
     try:

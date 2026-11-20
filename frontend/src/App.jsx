@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import Header from './components/Header';
-import KPICards from './components/KPICards';
-import ChartsSection from './components/ChartsSection';
-import AgentCrewMonitor from './components/AgentCrewMonitor';
-import ApprovalDesk from './components/ApprovalDesk';
-import ChatBot from './components/ChatBot';
-import ReportsViewer from './components/ReportsViewer';
-import ToyFeaturesZone from './components/ToyFeaturesZone';
-import TourGuide from './components/TourGuide';
-import { fetchKPIs, fetchPendingApprovals, fetchLatestReport } from './api/client';
+import Sidebar from './components/Sidebar';
+import Navbar from './components/Navbar';
+import AuthModal from './components/AuthModal';
+import DashboardView from './components/DashboardView';
+import AgentCrewView from './components/AgentCrewView';
+import ChatView from './components/ChatView';
+import ApprovalsView from './components/ApprovalsView';
+import DatasetView from './components/DatasetView';
+import ReportsView from './components/ReportsView';
+import SettingsView from './components/SettingsView';
+import { fetchKPIs, fetchPendingApprovals, fetchLatestReport, runAgentCrew } from './api/client';
 import { Loader2 } from 'lucide-react';
+import axios from 'axios';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -17,6 +19,15 @@ export default function App() {
   const [pendingApprovals, setPendingApprovals] = useState([]);
   const [latestReport, setLatestReport] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [runningCrew, setRunningCrew] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [user, setUser] = useState({
+    id: 1,
+    full_name: 'Vikramaditya Singhania',
+    role: 'Chief Risk Officer',
+    email: 'manager@apexbank.com',
+    company_name: 'Apex Commercial Bank'
+  });
 
   const loadData = async () => {
     setLoading(true);
@@ -30,6 +41,19 @@ export default function App() {
       if (kpiRes.status === 'fulfilled') setKpis(kpiRes.value.data);
       if (appRes.status === 'fulfilled') setPendingApprovals(appRes.value.data);
       if (repRes.status === 'fulfilled') setLatestReport(repRes.value.data);
+
+      // Check user session
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const userRes = await axios.get('/api/auth/me', {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          setUser(userRes.data);
+        } catch {
+          // keep default officer
+        }
+      }
     } catch (e) {
       console.error(e);
     } finally {
@@ -41,88 +65,83 @@ export default function App() {
     loadData();
   }, []);
 
-  return (
-    <div className="min-h-screen bg-[#0b0f19] text-slate-100 flex flex-col selection:bg-blue-500 selection:text-white relative">
-      {/* Interactive Animated Hinglish Tour Guide (Bunty AI) */}
-      <TourGuide activeTab={activeTab} setActiveTab={setActiveTab} />
+  const handleRunCrew = async () => {
+    setRunningCrew(true);
+    try {
+      const res = await runAgentCrew();
+      setLatestReport(res.data);
+      await loadData();
+      setActiveTab('agents');
+    } catch (err) {
+      alert(err.response?.data?.detail || 'Multi-Agent crew execution failed.');
+    } finally {
+      setRunningCrew(false);
+    }
+  };
 
-      {/* Sticky Header with Non-Production Pin */}
-      <Header 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab} 
-        pendingCount={pendingApprovals.length} 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+  };
+
+  return (
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 text-slate-900">
+      {/* Left Navigation Sidebar */}
+      <Sidebar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        pendingCount={pendingApprovals.length}
+        user={user}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onLogout={handleLogout}
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-8 space-y-6">
-        {loading && !kpis ? (
-          <div className="h-96 flex flex-col items-center justify-center space-y-3 text-slate-400">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-            <p className="text-xs font-semibold">Bank Data Load Ho Raha Hai... Kripya Wait Karein</p>
-          </div>
-        ) : (
-          <>
-            {/* View: Dashboard (Paiso Ka Hisab) */}
-            {activeTab === 'dashboard' && (
-              <div className="space-y-6 animate-fade-in">
-                <KPICards kpis={kpis} />
-                <ChartsSection kpis={kpis} />
-              </div>
-            )}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        {/* Top Header Navbar */}
+        <Navbar
+          activeTab={activeTab}
+          onRunCrew={handleRunCrew}
+          runningCrew={runningCrew}
+          user={user}
+          onOpenAuth={() => setIsAuthOpen(true)}
+        />
 
-            {/* View: 6 Multi-Agents Crew */}
-            {activeTab === 'agents' && (
-              <div className="animate-fade-in">
-                <AgentCrewMonitor 
+        {/* Dynamic Body Content */}
+        <main className="flex-1 overflow-y-auto p-8 max-w-7xl w-full mx-auto">
+          {loading && !kpis ? (
+            <div className="h-96 flex flex-col items-center justify-center space-y-3 text-slate-500">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+              <p className="text-xs font-semibold">Connecting to Core Banking Database Ledgers...</p>
+            </div>
+          ) : (
+            <>
+              {activeTab === 'dashboard' && <DashboardView kpis={kpis} />}
+              {activeTab === 'agents' && (
+                <AgentCrewView 
                   latestReport={latestReport} 
                   onReportGenerated={(newRep) => {
                     setLatestReport(newRep);
                     loadData();
-                  }} 
+                  }}
                 />
-              </div>
-            )}
+              )}
+              {activeTab === 'chat' && <ChatView />}
+              {activeTab === 'approval' && <ApprovalsView user={user} />}
+              {activeTab === 'dataset' && <DatasetView />}
+              {activeTab === 'reports' && <ReportsView />}
+              {activeTab === 'settings' && <SettingsView user={user} />}
+            </>
+          )}
+        </main>
+      </div>
 
-            {/* View: AI Chat (Charcha AI) */}
-            {activeTab === 'chat' && (
-              <div className="animate-fade-in">
-                <ChatBot />
-              </div>
-            )}
-
-            {/* View: Approval Desk (Human-in-the-Loop) */}
-            {activeTab === 'approval' && (
-              <div className="animate-fade-in">
-                <ApprovalDesk onDecisionMade={loadData} />
-              </div>
-            )}
-
-            {/* View: Reports & Audit */}
-            {activeTab === 'reports' && (
-              <div className="animate-fade-in">
-                <ReportsViewer />
-              </div>
-            )}
-
-            {/* View: Toy Features Zone */}
-            {activeTab === 'toys' && (
-              <div className="animate-fade-in">
-                <ToyFeaturesZone />
-              </div>
-            )}
-          </>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="glass-panel border-t border-slate-800/80 py-4 px-6 text-center text-xs text-slate-500">
-        <p>
-          Apex Commercial Bank Decision Intelligence System • React 19 + FastAPI + CrewAI + Gemini 3.5 Flash
-        </p>
-        <p className="text-[10px] text-slate-600 mt-1">
-          Synthetic Dataset Period: May 1, 2026 – October 31, 2026 • Academic & Evaluation Prototype
-        </p>
-      </footer>
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onAuthSuccess={(u) => setUser(u)}
+      />
     </div>
   );
 }
