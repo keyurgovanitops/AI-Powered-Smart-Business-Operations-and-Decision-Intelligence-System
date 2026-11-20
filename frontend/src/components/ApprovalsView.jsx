@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 
-export default function ApprovalsView({ user }) {
+export default function ApprovalsView({ user, onDecisionMade }) {
   const [approvals, setApprovals] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [notes, setNotes] = useState('');
@@ -49,6 +49,7 @@ export default function ApprovalsView({ user }) {
       setStatusMsg(`Decision successfully logged: Action has been marked as ${status}.`);
       setNotes('');
       await loadData();
+      if (onDecisionMade) onDecisionMade();
     } catch (err) {
       setStatusMsg('Failed to record decision: ' + (err.response?.data?.detail || err.message));
     } finally {

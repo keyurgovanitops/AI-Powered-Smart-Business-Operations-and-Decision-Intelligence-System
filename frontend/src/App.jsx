@@ -8,10 +8,12 @@ import ChatView from './components/ChatView';
 import ApprovalsView from './components/ApprovalsView';
 import DatasetView from './components/DatasetView';
 import ReportsView from './components/ReportsView';
+import AdminView from './components/AdminView';
 import SettingsView from './components/SettingsView';
 import { fetchKPIs, fetchPendingApprovals, fetchLatestReport, runAgentCrew } from './api/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertTriangle, X } from 'lucide-react';
 import axios from 'axios';
+import confetti from 'canvas-confetti';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -21,6 +23,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [runningCrew, setRunningCrew] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [toast, setToast] = useState(null);
   const [user, setUser] = useState({
     id: 1,
     full_name: 'Vikramaditya Singhania',
@@ -28,6 +31,13 @@ export default function App() {
     email: 'manager@apexbank.com',
     company_name: 'Apex Commercial Bank'
   });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(null);
+    }, 4500);
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -72,8 +82,12 @@ export default function App() {
       setLatestReport(res.data);
       await loadData();
       setActiveTab('agents');
+      try {
+        confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+      } catch (e) {}
+      showToast(`Multi-Agent Crew Analysis completed! Generated Audit Dossier #${res.data.id}.`, 'success');
     } catch (err) {
-      alert(err.response?.data?.detail || 'Multi-Agent crew execution failed.');
+      showToast(err.response?.data?.detail || 'Multi-Agent crew execution failed.', 'error');
     } finally {
       setRunningCrew(false);
     }
@@ -82,10 +96,29 @@ export default function App() {
   const handleLogout = () => {
     localStorage.removeItem('token');
     setUser(null);
+    showToast('Signed out of executive session.', 'info');
   };
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 text-slate-900">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border animate-fade-in bg-white border-slate-200">
+          {toast.type === 'error' ? (
+            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
+          ) : (
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          )}
+          <span className="text-xs font-semibold text-slate-800">{toast.message}</span>
+          <button 
+            onClick={() => setToast(null)}
+            className="text-slate-400 hover:text-slate-600 ml-2"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Left Navigation Sidebar */}
       <Sidebar
         activeTab={activeTab}
@@ -123,13 +156,23 @@ export default function App() {
                   onReportGenerated={(newRep) => {
                     setLatestReport(newRep);
                     loadData();
+                    showToast(`Audit Dossier #${newRep.id} successfully recorded!`, 'success');
                   }}
                 />
               )}
               {activeTab === 'chat' && <ChatView />}
-              {activeTab === 'approval' && <ApprovalsView user={user} />}
+              {activeTab === 'approval' && (
+                <ApprovalsView 
+                  user={user} 
+                  onDecisionMade={() => {
+                    loadData();
+                    showToast('Governance decision recorded in audit log.', 'success');
+                  }} 
+                />
+              )}
               {activeTab === 'dataset' && <DatasetView />}
               {activeTab === 'reports' && <ReportsView />}
+              {activeTab === 'admin' && <AdminView user={user} />}
               {activeTab === 'settings' && <SettingsView user={user} />}
             </>
           )}
@@ -140,7 +183,10 @@ export default function App() {
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        onAuthSuccess={(u) => setUser(u)}
+        onAuthSuccess={(u) => {
+          setUser(u);
+          showToast(`Authenticated as ${u.full_name} (${u.role})`, 'success');
+        }}
       />
     </div>
   );

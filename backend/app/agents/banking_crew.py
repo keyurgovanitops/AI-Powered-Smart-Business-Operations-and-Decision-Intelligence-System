@@ -22,7 +22,7 @@ def run_banking_multi_agent_analysis(kpis: Dict[str, Any]) -> Dict[str, Any]:
     if has_api_key and settings.GEMINI_API_KEY:
         try:
             import requests
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key={settings.GEMINI_API_KEY}"
             
             kpi_summary = (
                 f"Total Customers: {kpis['total_customers']:,}\n"
@@ -56,11 +56,11 @@ Ensure the tone is strictly professional, analytical, and authoritative. Return 
                 "generationConfig": {"responseMimeType": "application/json"}
             }
             
-            res = requests.post(url, json=payload, timeout=20)
+            res = requests.post(url, json=payload, timeout=30)
             if res.status_code == 200:
                 data = json.loads(res.json()["candidates"][0]["content"]["parts"][0]["text"])
                 return {
-                    "source": "Gemini 3.5 Flash (Live Agent Orchestration)",
+                    "source": "Gemini 3.8 Flash (Live Multi-Agent Crew)",
                     "data_analyst_output": data.get("data_analyst_output", ""),
                     "marketing_output": data.get("marketing_output", ""),
                     "finance_output": data.get("finance_output", ""),
@@ -75,7 +75,8 @@ Ensure the tone is strictly professional, analytical, and authoritative. Return 
                         "verified_by": "Verification Agent"
                     }
                 }
-        except Exception:
+        except Exception as e:
+            print(f"Gemini agent orchestration notice: {e}")
             pass
 
     # High-Precision Analytical Engine (Deterministic & Real Dataset Driven)

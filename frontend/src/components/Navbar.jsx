@@ -15,6 +15,7 @@ export default function Navbar({
     approval: 'Human-in-the-Loop Governance & Audit Authorizations',
     dataset: 'Banking Relational Dataset Explorer & Schema Preview',
     reports: 'Verified Business Intelligence Reports Archive',
+    admin: 'Platform Administration & Officer Governance',
     settings: 'Organization Profile & System Configuration'
   };
 
@@ -42,7 +43,7 @@ export default function Navbar({
         <button
           onClick={onRunCrew}
           disabled={runningCrew}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-sm transition-all disabled:opacity-60"
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-sm transition-all disabled:opacity-60 cursor-pointer"
         >
           {runningCrew ? (
             <>
@@ -78,7 +79,7 @@ export default function Navbar({
         ) : (
           <button
             onClick={onOpenAuth}
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-blue-600 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-lg transition-colors border border-slate-200"
+            className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-blue-600 bg-slate-100 hover:bg-slate-200 px-3 py-2 rounded-lg transition-colors border border-slate-200 cursor-pointer"
           >
             <User className="w-3.5 h-3.5" />
             <span>Sign In / Register</span>

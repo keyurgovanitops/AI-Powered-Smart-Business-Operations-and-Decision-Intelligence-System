@@ -1,9 +1,10 @@
+from typing import List
 import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from backend.app.database import get_db
 from backend.app.models.user import User
 from backend.app.schemas.auth import UserRegister, UserLogin, Token, UserResponse
@@ -11,14 +12,18 @@ from backend.app.config import settings
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    try:
+        return bcrypt.checkpw(plain_password[:72].encode('utf-8'), hashed_password.encode('utf-8'))
+    except Exception:
+        return False
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
+def get_password_hash(password: str) -> str:
+    pwd_bytes = password[:72].encode('utf-8')
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(pwd_bytes, salt).decode('utf-8')
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -98,3 +103,21 @@ def login(login_data: UserLogin, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserResponse)
 def read_current_user(current_user: User = Depends(get_current_user)):
     return current_user
+
+@router.get("/users", response_model=List[UserResponse])
+def list_users(db: Session = Depends(get_db)):
+    users = db.query(User).all()
+    if not users:
+        # Create default manager if none exists
+        default_user = User(
+            email="manager@apexbank.com",
+            hashed_password=get_password_hash("admin123"),
+            full_name="Vikramaditya Singhania",
+            role="Chief Risk Officer",
+            company_name="Apex Commercial Bank"
+        )
+        db.add(default_user)
+        db.commit()
+        db.refresh(default_user)
+        users = [default_user]
+    return users

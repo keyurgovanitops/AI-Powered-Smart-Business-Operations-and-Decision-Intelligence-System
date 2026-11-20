@@ -18,10 +18,10 @@ def chat_with_bank_ai(request: ChatRequest, db: Session = Depends(get_db)):
     kpis = calculate_banking_kpis(db)
     question = request.question.strip()
     
-    # Try live Gemini 3.5 Flash if API key is configured
+    # Try live Gemini 3.8 Flash if API key is configured
     if settings.GEMINI_API_KEY:
         try:
-            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={settings.GEMINI_API_KEY}"
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key={settings.GEMINI_API_KEY}"
             dep_cr = round(kpis['total_deposits'] / 10_000_000, 2)
             loan_cr = round(kpis['total_approved_loan_amount'] / 10_000_000, 2)
             overdue_cr = round(kpis['total_overdue_amount'] / 10_000_000, 2)
